@@ -19,9 +19,12 @@ static_assert(offsetof(SaveDataMount2, dir_name) == 8 && offsetof(SaveDataMount2
 
 namespace {
 
+constexpr int SaveDataErrorParameter = -2137063424;
+constexpr int SaveDataErrorNotInitialized = -2137063423;
 constexpr int SaveDataErrorNotFound = -2137063416;
 constexpr int SaveDataErrorBusy = -2137063421;
 constexpr std::uint32_t MountReadWrite = 2;
+constexpr std::uint32_t MountCreate = 4;
 constexpr std::uint32_t MountCreate2 = 32;
 
 int failures = 0;
@@ -83,7 +86,6 @@ void TestDirNameSearchPs4() {
 }
 
 void TestMount2() {
-    Check(sceSaveDataInitialize3(nullptr) == 0, "SaveData initializes");
     SceSaveDataDirName created{};
     std::strcpy(created.data, "mount2-new");
     SaveDataMount2 mount{};
@@ -92,6 +94,8 @@ void TestMount2() {
     mount.blocks = 96;
     mount.mount_mode = MountReadWrite | MountCreate2;
     SaveDataMountResult result{};
+    Check(sceSaveDataMount2(&mount, &result) == SaveDataErrorNotInitialized, "Mount2 before initialization is NOT_INITIALIZED");
+    Check(sceSaveDataInitialize3(nullptr) == 0, "SaveData initializes");
     Check(sceSaveDataMount2(&mount, &result) == 0, "Mount2 creates a missing save");
     Check(result.mount_status == 1u, "Mount2 reports the save as created");
     Check(result.mount_point.data[0] != '\0', "Mount2 reports a mount point");
@@ -113,6 +117,16 @@ void TestMount2() {
     mount.dir_name = &absent;
     Check(sceSaveDataMount2(&mount, &result) == SaveDataErrorNotFound, "Mount2 open of a missing save is NOT_FOUND");
     Check(ThrowsRuntimeError([&] { sceSaveDataMount2(nullptr, &result); }), "null mount throws");
+
+    SceSaveDataDirName small{};
+    std::strcpy(small.data, "mount2-small");
+    mount.dir_name = &small;
+    mount.mount_mode = 0;
+    Check(sceSaveDataMount2(&mount, &result) == SaveDataErrorParameter, "Mount2 with mount mode 0 is PARAMETER");
+    mount.blocks = 1;
+    mount.mount_mode = MountReadWrite | MountCreate;
+    Check(sceSaveDataMount2(&mount, &result) == SaveDataErrorParameter, "Mount2 creating a save of fewer than 96 blocks is PARAMETER");
+    Check(!std::filesystem::exists(std::filesystem::path("_sd") / "mount2-small"), "a refused Mount2 creates no directory");
 }
 
 }

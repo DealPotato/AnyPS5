@@ -668,6 +668,13 @@ static int mount2(const SaveDataMount2* mount, SaveDataMountResult* mount_result
     if (mount == nullptr) {
         throw std::runtime_error("sceSaveDataMount2: null argument");
     }
+    if (g_initializations == 0) {
+        return SAVE_DATA_ERROR_NOT_INITIALIZED;
+    }
+    const bool creates = (mount->mount_mode & (SAVE_DATA_MOUNT_MODE_CREATE | SAVE_DATA_MOUNT_MODE_CREATE2)) != 0;
+    if (mount->mount_mode == 0 || (creates && mount->blocks < SAVE_DATA_BLOCKS_MIN2)) {
+        return SAVE_DATA_ERROR_PARAMETER;
+    }
     SaveDataMount3 converted{};
     converted.user_id = mount->user_id;
     converted.dir_name = mount->dir_name;
