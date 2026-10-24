@@ -959,3 +959,7 @@ int APS5_VABI getgroups_nid_postfix(int capacity, std::uint32_t* groups) {
 }
 
 }
+
+extern "C" int APS5_VABI sceKernelIsNeoMode() {
+    return 0;
+}

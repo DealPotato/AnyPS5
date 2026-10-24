@@ -14,6 +14,7 @@ int APS5_VABI sceVideoOutClose(int handle);
 int APS5_VABI sceVideoOutInitializeOutputOptions(VideoOutOutputOptions* options);
 int APS5_VABI sceVideoOutIsOutputSupported(int handle, std::uint64_t mode, const VideoOutOutputOptions* options, void* reservedPtr, std::uint64_t reserved);
 int APS5_VABI sceVideoOutConfigureOutput(int handle, std::uint64_t mode, const VideoOutOutputOptions* options, void* reservedPtr, std::uint64_t reserved);
+int APS5_VABI sceVideoOutConfigureOutputMode_(int handle, std::uint32_t reserved, const void* mode, const void* options, std::size_t sizeOfMode);
 }
 
 static constexpr int SYSTEM_USER = 255;
@@ -38,6 +39,8 @@ int main() {
     std::memcpy(raw.data(), &options, raw.size());
     for (std::size_t index = 0; index < raw.size(); ++index) Require(raw[index] == (index == 2 ? 0xFF : 0));
     Require(sceVideoOutInitializeOutputOptions(nullptr) == INVALID_ADDRESS);
+    std::array<std::uint8_t, 24> ps4Mode{};
+    Require(sceVideoOutConfigureOutputMode_(1, 0, ps4Mode.data(), nullptr, ps4Mode.size()) == INVALID_HANDLE);
 
     std::array<std::uint8_t, 64> zeroedOpenParam{};
     Require(sceVideoOutOpen(SYSTEM_USER, HMD2_MAIN_BUS, 0, nullptr) == INVALID_VALUE);
@@ -58,6 +61,10 @@ int main() {
     }
     Require(handle > 0);
     Require(sceVideoOutOpen(SYSTEM_USER, MAIN_BUS, 0, nullptr) == RESOURCE_BUSY);
+    Require(sceVideoOutConfigureOutputMode_(handle, 0, ps4Mode.data(), nullptr, ps4Mode.size()) == 0);
+    Require(sceVideoOutConfigureOutputMode_(handle, 0, nullptr, nullptr, ps4Mode.size()) == INVALID_ADDRESS);
+    Require(sceVideoOutConfigureOutputMode_(handle, 1, ps4Mode.data(), nullptr, ps4Mode.size()) == INVALID_VALUE);
+    Require(sceVideoOutConfigureOutputMode_(handle, 0, ps4Mode.data(), &options, ps4Mode.size()) == INVALID_VALUE);
     Require(sceVideoOutIsOutputSupported(handle, 1, &options, nullptr, 0) == 1);
     Require(sceVideoOutIsOutputSupported(handle, 1, nullptr, nullptr, 0) == 1);
     const int highFrameRate = sceVideoOutIsOutputSupported(handle, 15, &options, nullptr, 0);

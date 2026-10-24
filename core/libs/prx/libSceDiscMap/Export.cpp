@@ -34,4 +34,15 @@ int APS5_VABI sceDiscMapGetPackageSize(std::int64_t fflags, int* ret1, int* ret2
     return 0;
 }
 
+APS5_EXPORT("fJgP+wqifno", sceDiscMapUnknown_fJgP_wqifno);
+std::int32_t APS5_VABI sceDiscMapUnknown_fJgP_wqifno(const char* path, std::int64_t offset, std::int64_t size, std::int64_t* location, std::int64_t* lba, std::int64_t* lbaCount) {
+    (void)path;
+    (void)offset;
+    (void)size;
+    (void)location;
+    (void)lba;
+    (void)lbaCount;
+    return SCE_DISC_MAP_ERROR_NO_BITMAP_INFO;
+}
+
 }

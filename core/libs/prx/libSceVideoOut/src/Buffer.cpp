@@ -185,7 +185,7 @@ int APS5_VABI sceVideoOutRegisterBuffers(int handle, int bufferIndexStart, void*
     }
     AgcDriverCheckGuestMemory_nid_postfix(attribute, sizeof(*attribute), alignof(VideoOutBufferAttribute));
     AgcDriverCheckGuestMemory_nid_postfix(addresses, static_cast<std::size_t>(bufferNum) * sizeof(*addresses), alignof(void*));
-    if (attribute->option != 0 || attribute->reserved0 != 0 || attribute->reserved1 != 0) {
+    if ((attribute->option & ~static_cast<std::uint32_t>(VIDEO_OUT_BUFFER_ATTRIBUTE_OPTION_STRICT_COLORIMETRY)) != 0 || attribute->reserved0 != 0 || attribute->reserved1 != 0) {
         throw std::runtime_error(std::string(__func__) + ": VIDEO_OUT_ERROR_INVALID_OPTION");
     }
     if (attribute->tiling_mode != 1) {
@@ -195,6 +195,7 @@ int APS5_VABI sceVideoOutRegisterBuffers(int handle, int bufferIndexStart, void*
     group.attribute.pixel_format = Ps5PixelFormat(attribute->pixel_format);
     group.attribute.tiling_mode = attribute->tiling_mode;
     group.attribute.aspect_ratio = attribute->aspect_ratio;
+    group.attribute.option = attribute->option;
     group.attribute.width = attribute->width;
     group.attribute.height = attribute->height;
     group.attribute.pitch_in_pixel = attribute->pitch_in_pixel;
@@ -301,6 +302,28 @@ int APS5_VABI sceVideoOutSubmitFlip(int handle, int index, int flipMode, int64_t
     }
     lock.unlock();
     return VideoOutDriver::Get().SubmitFlip(handle, index, flipMode, flipArg);
+} catch (const ProcessShutdown&) {
+    LibcAwaitExit_nid_postfix();
+}
+
+}
+
+namespace {
+
+int OpenHandleOrError(int handle) {
+    auto& driver = VideoOutDriver::Get();
+    return driver.HasConfig(handle) && driver.IsOpen(handle) ? 0 : VIDEO_OUT_ERROR_INVALID_HANDLE;
+}
+
+}
+
+extern "C" {
+
+int APS5_VABI sceVideoOutConfigureOutputMode_(int handle, std::uint32_t reserved, const void* mode, const void* options, std::size_t sizeOfMode) try {
+    (void)sizeOfMode;
+    if (mode == nullptr) return VIDEO_OUT_ERROR_INVALID_ADDRESS;
+    if (reserved != 0 || options != nullptr) return VIDEO_OUT_ERROR_INVALID_VALUE;
+    return OpenHandleOrError(handle);
 } catch (const ProcessShutdown&) {
     LibcAwaitExit_nid_postfix();
 }

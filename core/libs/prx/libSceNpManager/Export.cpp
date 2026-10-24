@@ -847,6 +847,12 @@ void APS5_VABI sceNpRegisterGamePresenceCallback(void* callback, void* userdata)
     (void)userdata;
 }
 
+int APS5_VABI sceNpRegisterGamePresenceCallbackA(void* callback, void* userdata) {
+    (void)userdata;
+    if (!callback) return SCE_NP_ERROR_INVALID_ARGUMENT;
+    return 1;
+}
+
 int APS5_VABI sceNpRegisterNpReachabilityStateCallback(void* callback, void* userdata) {
     if (!callback) return SCE_NP_ERROR_INVALID_ARGUMENT;
     std::lock_guard lock(reachabilityMutex);

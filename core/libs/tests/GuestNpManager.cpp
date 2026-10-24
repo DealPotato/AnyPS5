@@ -48,6 +48,7 @@ int APS5_VABI sceNpRegisterStateCallbackA(void* callback, void* userdata);
 int APS5_VABI sceNpUnregisterStateCallbackA(int callbackId);
 int APS5_VABI sceNpRegisterNpReachabilityStateCallback(void* callback, void* userdata);
 void APS5_VABI sceNpRegisterGamePresenceCallback(void* callback, void* userdata);
+int APS5_VABI sceNpRegisterGamePresenceCallbackA(void* callback, void* userdata);
 int APS5_VABI sceNpUnregisterNpReachabilityStateCallback(void);
 }
 
@@ -145,6 +146,8 @@ void CheckStateCallbacksA() {
         "registering the reachability callback");
     sceNpRegisterGamePresenceCallback(nullptr, nullptr);
     sceNpRegisterGamePresenceCallback(reinterpret_cast<void*>(&AbortingGamePresenceCallback), &userdata[0]);
+    Require(sceNpRegisterGamePresenceCallbackA(nullptr, nullptr) == InvalidArgument, "sceNpRegisterGamePresenceCallbackA must reject a null callback");
+    Require(sceNpRegisterGamePresenceCallbackA(reinterpret_cast<void*>(&AbortingGamePresenceCallback), &userdata[0]) == 1, "sceNpRegisterGamePresenceCallbackA must return callback id 1");
     Require(sceNpCheckCallback() == 0, "sceNpCheckCallback failed");
     Require(SignedOutOnce(stateCallsA[0], &userdata[0]), "sceNpCheckCallback must deliver SIGNED_OUT once");
     Require(sceNpUnregisterNpReachabilityStateCallback() == 0, "unregistering the reachability callback");

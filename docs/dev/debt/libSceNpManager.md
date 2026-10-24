@@ -3,6 +3,7 @@
 ### Silent stubs
 
 - [sceNpUnregisterPlusEventCallback](../../../core/libs/prx/libSceNpManager/Export.cpp) (libSceNpManager) - returns 0 whether or not a callback was registered, as `sceNpUnregisterPremiumEventCallback` does: `sceNpRegisterPlusEventCallback` keeps no callback, and a signed-out user gets no plus events
+- [sceNpRegisterGamePresenceCallbackA](../../../core/libs/prx/libSceNpManager/Export.cpp) (libSceNpManager, PS4) - the user is signed out, so the game presence callback is accepted and never called; a non-null callback returns 1 as a callback ID, a null one `SCE_NP_ERROR_INVALID_ARGUMENT`. Not measured on a console.
 
 ### Unknown function info
 

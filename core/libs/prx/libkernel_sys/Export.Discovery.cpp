@@ -1521,11 +1521,6 @@ int APS5_VABI sceKernelIsModuleLoaded(void) {
     return 0;
 }
 
-int APS5_VABI sceKernelIsNeoMode(void) {
-    NotImplemented_nid_no_patch(__func__);
-    return 0;
-}
-
 int APS5_VABI sceKernelIsProspero(void) {
     NotImplemented_nid_no_patch(__func__);
     return 0;

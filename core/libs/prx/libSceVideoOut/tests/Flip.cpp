@@ -167,6 +167,14 @@ void testPs4Buffers() {
     auto withOption = attribute;
     withOption.option = 1;
     check(expectFailure([&] { sceVideoOutRegisterBuffers(handle, 3, fourth, 1, &withOption); }).find("VIDEO_OUT_ERROR_INVALID_OPTION") != std::string::npos, "a PS4 buffer option was accepted");
+    auto strict = attribute;
+    strict.option = VIDEO_OUT_BUFFER_ATTRIBUTE_OPTION_STRICT_COLORIMETRY;
+    check(sceVideoOutRegisterBuffers(handle, 3, fourth, 1, &strict) == 2, "a PS4 buffer with the strict colorimetry option was refused");
+    {
+        const auto cfg = VideoOutDriver::Get().GetConfig(handle);
+        std::lock_guard lock(cfg->mutex);
+        check(cfg->groups[2].attribute.option == VIDEO_OUT_BUFFER_ATTRIBUTE_OPTION_STRICT_COLORIMETRY, "the strict colorimetry option of a PS4 buffer was dropped");
+    }
     std::array<std::uint8_t, sizeof(VideoOutFlipStatus)> raw{};
     raw.fill(0xaa);
     check(sceVideoOutGetFlipStatus(handle, reinterpret_cast<VideoOutFlipStatus*>(raw.data())) == 0, "the PS4 flip status failed");
