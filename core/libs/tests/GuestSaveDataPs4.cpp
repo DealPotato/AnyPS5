@@ -20,6 +20,7 @@ constexpr int SaveDataErrorNotInitialized = -2137063423;
 constexpr int SaveDataErrorNotFound = -2137063416;
 constexpr int SaveDataErrorNotMounted = -2137063420;
 constexpr int SaveDataErrorBusy = -2137063421;
+constexpr int SaveDataErrorInvalidLoginUser = -2137063407;
 constexpr std::uint32_t MountReadWrite = 2;
 constexpr std::uint32_t MountCreate = 4;
 constexpr std::uint32_t MountCreate2 = 32;
@@ -113,6 +114,13 @@ void TestMount2() {
     Check(sceSaveDataMount2(&mount, &result) == 0, "Mount2 opens an existing save");
     Check(result.mount_status == 0u, "Mount2 reports the existing save as opened");
     Check(sceSaveDataUmount2(0, &result.mount_point) == 0, "the opened save unmounts");
+    mount.blocks = 0;
+    mount.mount_mode = MountReadWrite | MountCreate2;
+    Check(sceSaveDataMount2(&mount, &result) == 0, "Mount2 CREATE2 with 0 blocks opens an existing save");
+    Check(result.mount_status == 0u, "Mount2 CREATE2 reports the existing save as opened");
+    Check(sceSaveDataUmount2(0, &result.mount_point) == 0, "the CREATE2 mount point unmounts");
+    mount.blocks = 96;
+    mount.mount_mode = MountReadWrite;
 
     SceSaveDataDirName absent{};
     std::strcpy(absent.data, "absent");
@@ -129,6 +137,24 @@ void TestMount2() {
     mount.mount_mode = MountReadWrite | MountCreate;
     Check(sceSaveDataMount2(&mount, &result) == SaveDataErrorParameter, "Mount2 creating a save of fewer than 96 blocks is PARAMETER");
     Check(!std::filesystem::exists(std::filesystem::path("_sd") / "mount2-small"), "a refused Mount2 creates no directory");
+
+    mount.blocks = 96;
+    for (const char* name : {"survey_test", "SURVEY_TEST"}) {
+        SceSaveDataDirName underscored{};
+        std::strcpy(underscored.data, name);
+        mount.dir_name = &underscored;
+        Check(sceSaveDataMount2(&mount, &result) == SaveDataErrorParameter, std::string("Mount2 of ") + name + " is PARAMETER");
+        Check(!std::filesystem::exists(std::filesystem::path("_sd") / name), std::string("a refused Mount2 of ") + name + " creates no directory");
+    }
+    SceSaveDataDirName mixed{};
+    std::strcpy(mixed.data, "surveyTestAuto0");
+    mount.dir_name = &mixed;
+    Check(sceSaveDataMount2(&mount, &result) == 0, "Mount2 creates a mixed-case save");
+    Check(sceSaveDataUmount2(0, &result.mount_point) == 0, "the mixed-case save unmounts");
+    for (const int user : {-1, 0}) {
+        mount.user_id = user;
+        Check(sceSaveDataMount2(&mount, &result) == SaveDataErrorInvalidLoginUser, "Mount2 of user " + std::to_string(user) + " is INVALID_LOGIN_USER");
+    }
 }
 
 void TestSaveDataMemoryV1() {

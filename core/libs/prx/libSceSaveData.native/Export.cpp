@@ -18,6 +18,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include "SceTypes.hpp"
 #include "prx/libc/include/General.hpp"
 #include "prx/libc/include/RemoveTree.hpp"
@@ -674,9 +675,18 @@ static int mount2(const SaveDataMount2* mount, SaveDataMountResult* mount_result
     if (g_initializations == 0) {
         return SAVE_DATA_ERROR_NOT_INITIALIZED;
     }
-    const bool creates = (mount->mount_mode & (SAVE_DATA_MOUNT_MODE_CREATE | SAVE_DATA_MOUNT_MODE_CREATE2)) != 0;
+    if (mount->user_id == -1 || mount->user_id == 0) {
+        return SAVE_DATA_ERROR_INVALID_LOGIN_USER;
+    }
+    const bool creates = (mount->mount_mode & SAVE_DATA_MOUNT_MODE_CREATE) != 0;
     if (mount->mount_mode == 0 || (creates && mount->blocks < SAVE_DATA_BLOCKS_MIN2)) {
         return SAVE_DATA_ERROR_PARAMETER;
+    }
+    if (mount->dir_name != nullptr) {
+        const std::string_view name(mount->dir_name->data, sizeof(mount->dir_name->data));
+        if (name.substr(0, name.find('\0')).find('_') != std::string_view::npos) {
+            return SAVE_DATA_ERROR_PARAMETER;
+        }
     }
     SaveDataMount3 converted{};
     converted.user_id = mount->user_id;
