@@ -1768,8 +1768,6 @@ ColorTarget DecodeGcnColorBuffer(const Registers& cx, std::uint32_t slot) {
     const auto slice = view & 0x7ffu;
     const auto lastSlice = (view >> 13u) & 0x7ffu;
     Require(lastSlice >= slice, "the GCN color view ends before its first slice");
-    // Without a render target array index export every primitive lands on SLICE_START, so the view
-    // is one 2D slice; an exported index picks slices up to SLICE_MAX.
     const auto exports = find(cx, 0x207);
     Require(lastSlice == slice || exports == cx.end() || (exports->second & (1u << 18u)) == 0, "GCN color views that write several array slices are not implemented");
     const auto pitch = ((read(cx, 0x319 + stride) & 0x7ffu) + 1u) * 8u;
@@ -1788,8 +1786,6 @@ ColorTarget DecodeGcnColorBuffer(const Registers& cx, std::uint32_t slot) {
     color.mipCount = 1;
     color.surfaceAddress = static_cast<std::uint64_t>(read(cx, 0x318 + stride)) << 8u;
     const ColorTargetLayout layout(color.extent.width, color.extent.height, color.tileMode, color.elementBytes);
-    // The CB finds slice N of a thin GCN surface N slices of SLICE_TILE_MAX's size past the base,
-    // tiled the same way as slice 0, as the GCN texture layout places array layers.
     color.surfaceAddress += static_cast<std::uint64_t>(slice) * layout.Bytes();
     color.address = color.surfaceAddress;
     Require(layout.Bytes() == static_cast<std::size_t>(pitch) * color.extent.height * color.elementBytes, "PS4 color target pitch or slice is not padded the way its tile mode pads them");

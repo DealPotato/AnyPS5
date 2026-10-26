@@ -1459,12 +1459,9 @@ void ColorPipeBankXorTests() {
     Require(mipColor.mip == 2 && mipColor.mipCount == 5 && mipColor.extent.width == 64 && mipColor.extent.height == 32 && mipColor.surfaceAddress == mipBase + sliceBytes && mipColor.address == mipBase + sliceBytes + mips[2].tiledOffset && mipColor.mipTail == mips[2].tail && mipColor.pipeBankXor == 0x0200u, "a display XOR color view lost its array slice, mip placement or XOR");
 }
 
-// A PS4 CB_COLOR_VIEW is drawn as the 2D target of its SLICE_START, one SLICE_TILE_MAX slice per
-// array slice past the base, unless the vertex render target index writes several slices.
 void GcnColorViewSliceTests() {
     constexpr std::uint32_t side = 64;
     constexpr std::size_t sliceBytes = side * side * 4u;
-    // From the guest heap, so the base fits the 40 bits of a GCN CB_COLOR_BASE.
     void* block = GuestHeap::GuestHeapAlignForGpu_nid_postfix(65536, 4u * sliceBytes);
     const auto base = reinterpret_cast<std::uintptr_t>(block);
     Require(block != nullptr && (base >> 40u) == 0, "the guest heap returned no block below 1 TiB for the GCN color view test");
