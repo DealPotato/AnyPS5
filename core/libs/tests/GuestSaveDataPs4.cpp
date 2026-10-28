@@ -116,7 +116,8 @@ void TestMount2() {
     std::strcpy(absent.data, "absent");
     mount.dir_name = &absent;
     Check(sceSaveDataMount2(&mount, &result) == SaveDataErrorNotFound, "Mount2 open of a missing save is NOT_FOUND");
-    Check(ThrowsRuntimeError([&] { sceSaveDataMount2(nullptr, &result); }), "null mount throws");
+    Check(sceSaveDataMount2(nullptr, &result) == SaveDataErrorParameter, "Mount2 with a null mount is PARAMETER");
+    Check(sceSaveDataMount2(&mount, nullptr) == SaveDataErrorParameter, "Mount2 with a null result is PARAMETER");
 
     SceSaveDataDirName small{};
     std::strcpy(small.data, "mount2-small");

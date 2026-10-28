@@ -669,8 +669,8 @@ int APS5_VABI sceSaveDataMount3(const SaveDataMount3* mount, SaveDataMountResult
 }
 
 static int mount2(const SaveDataMount2* mount, SaveDataMountResult* mount_result) {
-    if (mount == nullptr) {
-        throw std::runtime_error("sceSaveDataMount2: null argument");
+    if (mount == nullptr || mount_result == nullptr) {
+        return SAVE_DATA_ERROR_PARAMETER;
     }
     if (g_initializations == 0) {
         return SAVE_DATA_ERROR_NOT_INITIALIZED;
